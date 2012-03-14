@@ -1,22 +1,10 @@
 GEM
   remote: http://rubygems.org/
   specs:
-    coderay (1.0.5)
     hiera (0.3.0)
-    method_source (0.7.1)
-    mime-types (1.17.2)
-    pry (0.9.8.4)
-      coderay (~> 1.0.5)
-      method_source (~> 0.7.1)
-      slop (>= 2.4.4, < 3)
-    rest-client (1.6.7)
-      mime-types (>= 1.16)
-    slop (2.4.4)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
   hiera
-  pry
-  rest-client
