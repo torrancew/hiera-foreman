@@ -1,0 +1,15 @@
+Foreman Backend for Hiera
+=========================
+
+A pluggable hiera backend that queries a foreman server for data.
+
+Contact
+-------
+For bugs, please file an issue in the GitHub tracker.
+
+To hack, feel free to fork, contribute and submit a pull request.
+
+Otherwise, feel free to send me a message on GitHub or IRC.
+
+###IRC:
+  torrancew on Freenode, EFNet
