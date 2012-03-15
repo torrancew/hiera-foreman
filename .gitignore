@@ -1,2 +1,2 @@
 /.rvmrc
-/bin/foreman
+/pkg/*.gem
