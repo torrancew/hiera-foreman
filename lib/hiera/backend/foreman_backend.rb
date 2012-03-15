@@ -16,7 +16,6 @@ class Hiera
 
       def lookup(key, scope, order_override, resolution_type)
         Hiera.debug("Looking up #{key} in Foreman backend")
-        answer = Backend.empty_answer(resolution_type)
         
         fqdn = scope['fqdn'] if scope.has_key?('fqdn')
 
