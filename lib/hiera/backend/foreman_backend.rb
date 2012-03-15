@@ -7,7 +7,6 @@ class Hiera
       attr_reader :url
 
       def initialize
-        require 'pry'
         require 'net/http'
         require 'net/https'
 
