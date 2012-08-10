@@ -3,6 +3,31 @@ Foreman Backend for Hiera
 
 A pluggable hiera backend that queries a foreman server for data.
 
+Configuration
+-------
+You will need to edit your hiera.yaml config file to include a foreman url, username, and password. 
+Looking up smart variables in forman requires authentication.
+
+    ---
+    :backends:
+      - foreman
+      - yaml
+    
+    :logger: console
+    
+    :hierachy:
+      - %{fqdn}
+      - common
+    
+    :yaml:
+      :datadir: '/etc/puppet/hieradata'
+    
+    :foreman:
+      :url: 'http://foreman.cas.unt.edu'
+      :user: 'USERNAME'
+      :pass: 'PASSWORD'
+
+
 Contact
 -------
 For bugs, please file an issue in the GitHub tracker.
