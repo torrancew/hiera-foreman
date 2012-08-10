@@ -7,7 +7,6 @@ class Hiera
       attr_reader :url
 
       def initialize
-        require 'pry'
         require 'net/http'
         require 'net/https'
 
@@ -17,7 +16,6 @@ class Hiera
 
       def lookup(key, scope, order_override, resolution_type)
         Hiera.debug("Looking up #{key} in Foreman backend")
-        answer = Backend.empty_answer(resolution_type)
         
         fqdn = scope['fqdn'] if scope.has_key?('fqdn')
 
@@ -27,7 +25,13 @@ class Hiera
         http.verify_mode = OpenSSL::SSL::VERIFY_NONE if http.use_ssl
         request          = Net::HTTP::Get.new(foreman_uri.request_uri)
 
-        YAML.load(http.request(request).body)['parameters'][key]
+        node_definition = YAML.load(http.request(request).body)
+        case key
+        when 'classes'
+          node_definition['classes'] || []
+        else
+          node_definition['parameters'][key] || nil
+        end
       end
     end
   end
