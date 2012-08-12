@@ -1,6 +1,4 @@
 # Foreman Backend for Hiera
-# Many thanks to @ohadlevy
-# from: https://github.com/torrancew/hiera-foreman
 
 class Hiera
   module Backend
@@ -14,75 +12,63 @@ class Hiera
         require 'uri'
         require 'json'
 
-        @url = Config[:foreman][:url]
+        Hiera.debug("Hiera Foreman backend starting")
+
+        @http = nil
+        @url  = Config[:foreman][:url]
         @user = Config[:foreman][:user]
         @pass = Config[:foreman][:pass]
-        Hiera.debug("Hiera Foreman backend starting")
       end
 
       def lookup(key, scope, order_override, resolution_type)
-        begin
-          fqdn = scope.catalog.tags[4]
-        rescue
-          fqdn = scope['fqdn'] if scope.has_key?('fqdn')
-          Hiera.debug("trying mcollective")
-        end
-        Hiera.debug("got fqdn #{fqdn}")
-
+        fqdn    = scope['fqdn']
         results = []
         
-        Hiera.debug("Trying #{key} in ENC")
-        results = encquery(fqdn, key)
-        if !results
-          Hiera.debug("Trying #{key} in SmartVar")
-          results = smartquery(fqdn, key)
-        end 
-        Hiera.debug("Found #{results}")
-        return results
+        foreman_uri       = URI.parse("#{@url}")
+        @http             = Net::HTTP.new(foreman_uri.host, foreman_uri.port)
+        @http.use_ssl     = foreman_uri.scheme == 'https'
+        @http.verify_mode = OpenSSL::SSL::VERIFY_NONE if @http.use_ssl
+
+        data = lookup_enc(fqdn).merge(lookup_smartvars(fqdn))
+        data[key] || nil
       end
 
-      def encquery (fqdn, key)
-        Hiera.debug("performing ENC lookup on #{fqdn} for #{key}")
-        answer = []
+      def lookup_enc(fqdn)
+        Hiera.debug("Performing Foreman ENC lookup on #{fqdn}")
 
-        foreman_uri      = URI.parse("#{@url}/node/#{fqdn}?format=yml")
-        http             = Net::HTTP.new(foreman_uri.host, foreman_uri.port)
-        http.use_ssl     = foreman_uri.scheme == 'https'
-        http.verify_mode = OpenSSL::SSL::VERIFY_NONE if http.use_ssl
-        request          = Net::HTTP::Get.new(foreman_uri.request_uri)
-  
-        data = YAML.load(http.request(request).body)
+        path = URI.parse("#{@url}/node/#{fqdn}?format=yml")
+        req  = Net::HTTP::Get.new(path.request_uri)
 
-        case key
-          when 'classes'
-            Hiera.debug("Parsing classes")
-            answer = data['classes'] || []
-          else
-            Hiera.debug("Parsing something else")
-            answer = data['parameters'][key] || nil
-        end
-  
-        Hiera.debug("ENC returning #{answer}")
-        return answer
+        # Using interpolated strings allows this to work
+        # even if the server doesn't require basic auth
+        req.basic_auth("#{@user}", "#{@pass}")
+        data = YAML.load(@http.request(req).body) || {}
+
+        return { 'classes' => data['classes'] }.merge(data['parameters'])
       end
 
-      def smartquery (fqdn, key)
-        uri = URI.parse("#{@url}")
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true if uri.scheme == 'https'
+      def lookup_smartvars(fqdn)
+        Hiera.debug("Performing Foreman SmartVar lookup on #{fqdn}")
 
-        path = URI.escape("/hosts/#{fqdn}/lookup_keys/#{key}")
-        req = Net::HTTP::Get.new(path)
+        path = URI.escape("#{@url}/hosts/#{fqdn}/lookup_keys")
+        req  = Net::HTTP::Get.new(path)
+        resp = nil
+
         req.basic_auth("#{@user}", "#{@pass}")
         req['Content-Type'] = 'application/json'
-        req['Accept'] = 'application/json'
+        req['Accept']       = 'application/json'
 
-        begin
-          Timeout::timeout(5) { JSON.parse(http.request(req).body)["value"] }
-        rescue
-          Hiera.debug("no smart var for #{key}")
-          return nil
+        Timeout::timeout(5) do
+          resp = @http.request(req).body
         end
+
+        if resp && resp.length >= 2
+          data = JSON.parse(resp)
+        else
+          data = {}
+        end
+
+        return data
       end
   
     end
