@@ -29,12 +29,31 @@ class Hiera
         @http.use_ssl     = foreman_uri.scheme == 'https'
         @http.verify_mode = OpenSSL::SSL::VERIFY_NONE if @http.use_ssl
 
-        data = lookup_enc(fqdn).merge(lookup_smartvars(fqdn))
-        data[key] || nil
+        results = lookup_enc(fqdn, key)
+        if results.nil?
+          results = lookup_smartvars(fqdn, key)
+        end
+        unless results.nil?
+          begin
+            case resolution_type
+              when :array
+                if results.kind_of?(Array)
+                  data = results
+                else
+                  data = results.gsub(/, /, ',').split(',')
+                end
+              when :hash
+                data = results.split(',')
+              else
+                data = results
+            end
+          end
+        end
+        data || nil
       end
 
-      def lookup_enc(fqdn)
-        Hiera.debug("Performing Foreman ENC lookup on #{fqdn}")
+      def lookup_enc(fqdn, key)
+        Hiera.debug("Performing Foreman ENC lookup on #{fqdn} for #{key}")
 
         path = URI.parse("#{@url}/node/#{fqdn}?format=yml")
         req  = Net::HTTP::Get.new(path.request_uri)
@@ -44,13 +63,20 @@ class Hiera
         req.basic_auth("#{@user}", "#{@pass}")
         data = YAML.load(@http.request(req).body) || {}
 
-        return { 'classes' => data['classes'] }.merge(data['parameters'])
+        case key
+        when 'classes'
+          results = data['classes'] || []
+          Hiera.debug("returning classes")
+        else
+          results = data['parameters'][key] || nil
+        end
+        return results
       end
 
-      def lookup_smartvars(fqdn)
-        Hiera.debug("Performing Foreman SmartVar lookup on #{fqdn}")
+      def lookup_smartvars(fqdn, key)
+        Hiera.debug("Performing Foreman SmartVar lookup on #{fqdn} for #{key}")
 
-        path = URI.escape("#{@url}/hosts/#{fqdn}/lookup_keys")
+        path = URI.escape("#{@url}/hosts/#{fqdn}/lookup_keys/#{key}")
         req  = Net::HTTP::Get.new(path)
         resp = nil
 
@@ -63,9 +89,9 @@ class Hiera
         end
 
         if resp && resp.length >= 2
-          data = JSON.parse(resp)
+          data = JSON.parse(resp)["value"]
         else
-          data = {}
+          data = nil
         end
 
         return data
@@ -74,3 +100,4 @@ class Hiera
     end
   end
 end
+
