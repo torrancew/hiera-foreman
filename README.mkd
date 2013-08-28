@@ -25,10 +25,10 @@ You will need to edit your hiera.yaml config file to include a foreman url, as w
     :yaml:
       :datadir: '/etc/puppet/hieradata'
     
-    :foreman:
-      :url: 'http://foreman.cas.unt.edu'
-      :user: 'USERNAME'
-      :pass: 'PASSWORD'
+    :foreman
+      :url 'http://foreman.cas.unt.edu'
+      :user 'USERNAME'
+      :pass 'PASSWORD'
 
 Contributors
 ------------
