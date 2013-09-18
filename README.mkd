@@ -33,7 +33,7 @@ You will need to edit your hiera.yaml config file to include a foreman url, as w
 Contributors
 ------------
   * @mchugh19 - SmartVar Queries, calling from within puppet functions
-  * @ohadlevy - Inspriation and guidance
+  * @ohadlevy - Inspiration and guidance
 
 License
 -------
