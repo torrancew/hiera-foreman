@@ -65,7 +65,11 @@ class Hiera
 
         case key
         when 'classes'
-          results = data['classes'] || []
+          if data['classes']:
+            results = data['classes'].keys
+          else
+            results = []
+          end
           Hiera.debug("returning classes")
         else
           results = data['parameters'][key] || nil
