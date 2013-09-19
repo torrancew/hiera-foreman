@@ -72,7 +72,11 @@ class Hiera
           end
           Hiera.debug("returning classes")
         else
-          results = data['parameters'][key] || nil
+          if data['parameters'] and data['parameters'].has_key?(key):
+            results = data['parameters'][key]
+          else
+            results = nil
+          end
         end
         return results
       end
