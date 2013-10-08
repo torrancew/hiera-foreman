@@ -43,7 +43,7 @@ class Hiera
                   data = results.gsub(/, /, ',').split(',')
                 end
               when :hash
-                data = results.split(',')
+                data = YAML.load(results)
               else
                 data = results
             end
