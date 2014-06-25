@@ -43,7 +43,7 @@ class Hiera
                   data = results.gsub(/, /, ',').split(',')
                 end
               when :hash
-                data = results.split(',')
+                data = YAML.load(results)
               else
                 data = results
             end
@@ -65,10 +65,18 @@ class Hiera
 
         case key
         when 'classes'
-          results = data['classes'] || []
+          if data['classes']:
+            results = data['classes'].keys
+          else
+            results = []
+          end
           Hiera.debug("returning classes")
         else
-          results = data['parameters'][key] || nil
+          if data['parameters'] and data['parameters'].has_key?(key):
+            results = data['parameters'][key]
+          else
+            results = nil
+          end
         end
         return results
       end
