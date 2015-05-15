@@ -9,7 +9,7 @@ Since foreman has its own configurable search hierarchy, hiera-foreman does not 
 
 Configuration
 -------
-You will need to edit your hiera.yaml config file to include a foreman url, as well as a username, and password, if you're using HTTP Basic Auth. 
+You will need to edit your hiera.yaml config file to include a foreman url, as well as a username, and password, if you're using HTTP Basic Auth. Keys is an optional whitelist. If it is defined then any lookup key must be listed. If it is not listed nil is returned. This allows for strict control over what can be set per host in Foreman and also speeds up catalogue compilation.
 
     ---
     :backends:
@@ -29,6 +29,12 @@ You will need to edit your hiera.yaml config file to include a foreman url, as w
       :url: 'http://foreman.cas.unt.edu'
       :user: 'USERNAME'
       :pass: 'PASSWORD'
+      :keys:
+        - classes
+        - foreman_env
+        - puppetmaster
+        - location
+        - patchrelease
 
 Contributors
 ------------
