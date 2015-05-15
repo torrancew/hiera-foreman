@@ -18,6 +18,7 @@ class Hiera
         @url  = Config[:foreman][:url]
         @user = Config[:foreman][:user]
         @pass = Config[:foreman][:pass]
+        @keys = Config[:foreman][:keys]
       end
 
       def lookup(key, scope, order_override, resolution_type)
@@ -54,6 +55,10 @@ class Hiera
 
       def lookup_enc(fqdn, key)
         Hiera.debug("Performing Foreman ENC lookup on #{fqdn} for #{key}")
+        if (defined?(@keys) and @keys.is_a?(Array) and @keys.size > 0 )  and not @keys.include?(key)
+          Hiera.debug("Skipping, #{key} not found in #{@keys.inspect}")
+          return nil
+        end
 
         path = URI.parse("#{@url}/node/#{fqdn}?format=yml")
         req  = Net::HTTP::Get.new(path.request_uri)
